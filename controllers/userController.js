@@ -32,38 +32,18 @@ async function login (req, res) {
             message: 'No matches'
           })
         } else {
+          var membershipValidFlag
           User.findOne({ email: email }, (err, docs) => {
             var moment = require('moment')
             var startDate = moment(docs.membershipStart)
             var endDate = moment(docs.membershipEnd)
-
-            // const Date1 = (startDate.format('DD-MM-YYYY'))
-            // const Date2 = (endDate.format('DD-MM-YYYY'))
-            // console.log(Date1)
-            // console.log(Date2)
-            // var start = new Date(Date1.toString())
-            // console.log(docs.membershipEnd)
-            // var end = new Date(Date2)
-            // end.setHours(0, 0, 0, 0)
-            // console.log(end)
             var current = new Date()
 
-            // var date2 = new Date('2020-06-15')
-            // date2.setHours(0, 0, 0, 0)
-            // console.log(date2)
-            // console.log(current > start)
-            // console.log(current < end)
-            console.log(current)
             if ((current > startDate) && (current < endDate)) {
-              console.log('true')
+              membershipValidFlag = true
             } else {
-              console.log('false')
+              membershipValidFlag = false
             }
-            // if (current > start && current < end) {
-            //   console.log(true)
-            // } else {
-            //   console.log('false')
-            // }
             if (err) {
               logger.error(err)
               res.status(502).send({
@@ -105,7 +85,8 @@ async function login (req, res) {
                             userId: credsdocs.userId,
                             name: docs.name,
                             role: credsdocs.role,
-                            jwttoken: token
+                            jwttoken: token,
+                            membershipValidFlag: membershipValidFlag
                           })
                         }
                       })
