@@ -33,6 +33,37 @@ async function login (req, res) {
           })
         } else {
           User.findOne({ email: email }, (err, docs) => {
+            var moment = require('moment')
+            var startDate = moment(docs.membershipStart)
+            var endDate = moment(docs.membershipEnd)
+
+            // const Date1 = (startDate.format('DD-MM-YYYY'))
+            // const Date2 = (endDate.format('DD-MM-YYYY'))
+            // console.log(Date1)
+            // console.log(Date2)
+            // var start = new Date(Date1.toString())
+            // console.log(docs.membershipEnd)
+            // var end = new Date(Date2)
+            // end.setHours(0, 0, 0, 0)
+            // console.log(end)
+            var current = new Date()
+
+            // var date2 = new Date('2020-06-15')
+            // date2.setHours(0, 0, 0, 0)
+            // console.log(date2)
+            // console.log(current > start)
+            // console.log(current < end)
+            console.log(current)
+            if ((current > startDate) && (current < endDate)) {
+              console.log('true')
+            } else {
+              console.log('false')
+            }
+            // if (current > start && current < end) {
+            //   console.log(true)
+            // } else {
+            //   console.log('false')
+            // }
             if (err) {
               logger.error(err)
               res.status(502).send({
@@ -203,7 +234,20 @@ async function addUser (req, res) {
 
 async function getAllUsers (req, res) {
   try {
-    await User.find({}, (err, docs) => {
+    await Creds.aggregate([
+      { $match: { role: { $ne: 'ADMIN' } } },
+      { $addFields: { userId: { $toObjectId: '$userId' } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'users'
+        }
+      },
+      { $unwind: '$users' }
+    ]).exec((err, docs) => {
+      console.log(docs)
       if (err) {
         logger.error('DB Error')
         res.status(502).send({
