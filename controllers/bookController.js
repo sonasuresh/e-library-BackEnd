@@ -2,6 +2,7 @@ const Book = require('../models/bookModel')
 const Request = require('../models/requestModel')
 
 const logger = require('../lib/logger')
+var moment = require('moment')
 
 async function addBook (req, res) {
   try {
@@ -264,7 +265,7 @@ async function getOverallHistory (req, res) {
       { $addFields: { userId: { $toObjectId: '$userId' } } },
       {
         $lookup: {
-          from: 'users',
+          from: 'userdetails',
           localField: 'userId',
           foreignField: '_id',
           as: 'users'
@@ -438,6 +439,7 @@ async function getReturnRequestedBooks (req, res) {
 async function processIssueRequest (req, res) {
   try {
     const { requestId, status } = req.body
+    console.log(requestId)
     if (typeof requestId === 'undefined' && typeof status === 'undefined') {
       logger.error('Bad Request!')
       res.status(400).send({
@@ -453,43 +455,83 @@ async function processIssueRequest (req, res) {
             message: 'DB Error'
           })
         } else if (requestdocs) {
-          await Request.findByIdAndUpdate(requestId, { $set: { issueRequestStatus: status } }, { new: true }, async (err, updatedRequestdocs) => {
+          console.log(requestdocs)
+
+          var ObjectId = require('mongoose').Types.ObjectId
+
+          await Request.aggregate([
+            { $match: { _id: ObjectId(requestId) } },
+            { $addFields: { userId: { $toObjectId: '$userId' } } },
+            {
+              $lookup: {
+                from: 'userdetails',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'user'
+              }
+            },
+            { $unwind: '$user' }
+
+          ]).exec(async (err, docs) => {
             if (err) {
               logger.error('DB Error')
               res.status(502).send({
                 success: false,
                 message: 'DB Error'
               })
-            } else if (updatedRequestdocs) {
-              if (updatedRequestdocs.issueRequestStatus === false) {
-                await Book.findByIdAndUpdate(updatedRequestdocs.bookId, { $set: { availableStatus: true } }, { new: true }, (err, docs) => {
-                  if (err) {
-                    logger.error('DB Error')
-                    res.status(502).send({
-                      success: false,
-                      message: 'DB Error'
-                    })
-                  } else if (docs) {
-                    logger.info('Admin Processed the Issue Request')
-                    res.status(200).send({
-                      success: true,
-                      message: 'Request Processed!'
-                    })
-                  } else {
-                    logger.info('Failed to update available status of book after processing the request!')
-                    res.status(200).send({
-                      success: true,
-                      message: 'Failed to Process Request!'
-                    })
-                  }
-                })
-              } else {
-                logger.info('Admin Processed the Issue Request')
-                res.status(200).send({
-                  success: true,
-                  message: 'Request Processed!'
-                })
-              }
+            } else {
+              console.log(docs)
+              var CurrentDate = moment().format()
+              var notificationTime = moment(CurrentDate).add(docs[0].user.readingHours, 'hours').format('YYYY-MM-DD hh:mm:ss')
+              await Request.findByIdAndUpdate(requestId, { $set: { remainder: notificationTime } }, async (err, docs) => {
+                if (err) {
+                  logger.error(err)
+                  res.status(502).send({
+                    success: false,
+                    message: 'DB Error'
+                  })
+                } else {
+                  await Request.findByIdAndUpdate(requestId, { $set: { issueRequestStatus: status } }, { new: true }, async (err, updatedRequestdocs) => {
+                    if (err) {
+                      logger.error('DB Error')
+                      res.status(502).send({
+                        success: false,
+                        message: 'DB Error'
+                      })
+                    } else if (updatedRequestdocs) {
+                      if (updatedRequestdocs.issueRequestStatus === false) {
+                        await Book.findByIdAndUpdate(updatedRequestdocs.bookId, { $set: { availableStatus: true } }, { new: true }, (err, docs) => {
+                          if (err) {
+                            logger.error('DB Error')
+                            res.status(502).send({
+                              success: false,
+                              message: 'DB Error'
+                            })
+                          } else if (docs) {
+                            logger.info('Admin Processed the Issue Request')
+                            res.status(200).send({
+                              success: true,
+                              message: 'Request Processed!'
+                            })
+                          } else {
+                            logger.info('Failed to update available status of book after processing the request!')
+                            res.status(200).send({
+                              success: true,
+                              message: 'Failed to Process Request!'
+                            })
+                          }
+                        })
+                      } else {
+                        logger.info('Admin Processed the Issue Request')
+                        res.status(200).send({
+                          success: true,
+                          message: 'Request Processed!'
+                        })
+                      }
+                    }
+                  })
+                }
+              })
             }
           })
         } else {
@@ -794,6 +836,7 @@ async function sendReturnRequest (req, res) {
                     message: 'DB Error'
                   })
                 } else if (docs.length > 0) {
+                  console.log(today)
                   await Request.findOneAndUpdate({ _id: requestId }, { $set: { returnRequestDate: today } }, (err, docs) => {
                     if (err) {
                       logger.error('DB Error')
@@ -990,7 +1033,7 @@ async function getIssueRequests (req, res) {
       { $addFields: { userId: { $toObjectId: '$userId' } } },
       {
         $lookup: {
-          from: 'users',
+          from: 'userdetails',
           localField: 'userId',
           foreignField: '_id',
           as: 'user'
@@ -1036,11 +1079,11 @@ async function getIssueRequests (req, res) {
 async function getReturnRequests (req, res) {
   try {
     await Request.aggregate([
-      { $match: { issueRequestStatus: true, returnRequestStatus: null } },
+      { $match: { issueRequestStatus: true, returnRequestDate: { $ne: null } } },
       { $addFields: { userId: { $toObjectId: '$userId' } } },
       {
         $lookup: {
-          from: 'users',
+          from: 'userdetails',
           localField: 'userId',
           foreignField: '_id',
           as: 'user'

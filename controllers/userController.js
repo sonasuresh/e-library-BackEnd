@@ -168,7 +168,6 @@ async function addUser (req, res) {
             } else {
               const salt = 10
               const password = mobile.slice(5) + dob.slice(8)
-
               bcrypt.hash(password, salt, async (err, hash) => {
                 if (err) {
                   logger.error('DB Error')
@@ -216,11 +215,11 @@ async function addUser (req, res) {
 async function getAllUsers (req, res) {
   try {
     await Creds.aggregate([
-      { $match: { role: { $ne: 'ADMIN' } } },
+      { $match: { role: 'USER' } },
       { $addFields: { userId: { $toObjectId: '$userId' } } },
       {
         $lookup: {
-          from: 'users',
+          from: 'userdetails',
           localField: 'userId',
           foreignField: '_id',
           as: 'users'

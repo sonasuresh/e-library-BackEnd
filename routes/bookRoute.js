@@ -1,43 +1,34 @@
 const router = require('express').Router()
 const bookController = require('../controllers/bookController.js')
-// const middleware = require('../middleware/tokenValidation')
+const middleware = require('../middleware/tokenValidation')
 
-router.post('/', bookController.addBook)
-router.get('/search/:name', bookController.getBookByName)
-router.put('/', bookController.updateBook)
-router.get('/type/:status', bookController.getIssuableAndNonIssuableBooks)
-router.get('/:bookId', bookController.getBook)
-router.get('/', bookController.getAllBooks)
-router.delete('/:bookId', bookController.deleteBook)
-router.delete('/', bookController.deleteAllBooks)
-router.put('/issuestatus/:bookId/:status', bookController.updateIssuableStatus)
-router.put('/request/return', bookController.sendReturnRequest)
-router.put('/request/processissue', bookController.processIssueRequest)
-router.put('/request/processreturn', bookController.processReturnRequest)
-router.put('/:bookId/:status', bookController.updateAvailablity)
+router.post('/', middleware.isTokenPresent, bookController.addBook)
+router.get('/search/:name', middleware.isTokenPresent, bookController.getBookByName)
+router.put('/', middleware.isTokenPresent, bookController.updateBook)
+router.get('/type/:status', middleware.isTokenPresent, bookController.getIssuableAndNonIssuableBooks)
+router.get('/:bookId', middleware.isTokenPresent, bookController.getBook)
+router.get('/', middleware.isTokenPresent, bookController.getAllBooks)
+router.delete('/:bookId', middleware.isTokenPresent, bookController.deleteBook)
+router.delete('/', middleware.isTokenPresent, bookController.deleteAllBooks)
+router.put('/issuestatus/:bookId/:status', middleware.isTokenPresent, bookController.updateIssuableStatus)
+router.put('/request/return', middleware.isTokenPresent, bookController.sendReturnRequest)
+router.put('/request/processissue', middleware.isTokenPresent, bookController.processIssueRequest)
+router.put('/request/processreturn', middleware.isTokenPresent, bookController.processReturnRequest)
+router.put('/:bookId/:status', middleware.isTokenPresent, bookController.updateAvailablity)
 
-// __________
-router.get('/request/issue', bookController.getIssueRequests)// admin
-router.get('/request/return', bookController.getReturnRequests)// admin
-router.get('/admin/history', bookController.getOverallHistory)
+router.get('/request/issue', middleware.isTokenPresent, bookController.getIssueRequests)
+router.get('/request/return', middleware.isTokenPresent, bookController.getReturnRequests)
+router.get('/admin/history', middleware.isTokenPresent, bookController.getOverallHistory)
 
-// router.get('/request/:type', bookController.getAllRequests)
+router.post('/request/issue', middleware.isTokenPresent, bookController.sendIssueRequest)
 
-router.post('/request/issue', bookController.sendIssueRequest)
+router.get('/user/history/:userId', middleware.isTokenPresent, bookController.getHistoryBooks)
 
-// user
-router.get('/user/history/:userId', bookController.getHistoryBooks)
+router.get('/user/current/:userId', middleware.isTokenPresent, bookController.getCurrentBooks)
+router.get('/user/requested/return/:userId', middleware.isTokenPresent, bookController.getReturnRequestedBooks)
+router.get('/user/requested/:userId', middleware.isTokenPresent, bookController.getRequestedBooks)
 
-router.get('/user/current/:userId', bookController.getCurrentBooks)
-router.get('/user/requested/return/:userId', bookController.getReturnRequestedBooks)
-router.get('/user/requested/:userId', bookController.getRequestedBooks)
-
-router.delete('/request/:requestId/:userId', bookController.deleteParticularHistory)
-router.delete('/request/:userId', bookController.deleteHistory)
-
-// router.put('/:userId/:status', bookController.toggleActiveStatus);
-// router.get('/', userController.getAllUsers);
-// router.delete('/:userId',userController.deleteUser);
-// router.delete('/', userController.deleteAllUsers);
+router.delete('/request/:requestId/:userId', middleware.isTokenPresent, bookController.deleteParticularHistory)
+router.delete('/request/:userId', middleware.isTokenPresent, bookController.deleteHistory)
 
 module.exports = router

@@ -23,8 +23,15 @@ const RequestSchema = mongoose.Schema({
     type: Boolean,
     default: true
   },
-  type: String
-
+  type: String,
+  remainder: {
+    type: String,
+    default: ''
+  },
+  remainderSent: {
+    type: Boolean,
+    default: null
+  }
 })
 
 module.exports = mongoose.model('Request', RequestSchema)
