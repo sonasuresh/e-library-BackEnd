@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const userController = require('../controllers/userController.js')
-const middleware = require('../middleware/tokenValidation')
+const middleware = require('../middleware/tokenValidation.js')
 
 router.post('/login', userController.login)
 router.post('/', middleware.isTokenPresent, userController.addUser)
