@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const bookController = require('../controllers/bookController.js')
-const middleware = require('../middleware/tokenValidation.js')
+const middleware = require('../middleware/tokenValidation')
 
 router.post('/', middleware.isTokenPresent, bookController.addBook)
 router.get('/search/:name', middleware.isTokenPresent, bookController.getBookByName)

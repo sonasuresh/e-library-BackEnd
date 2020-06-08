@@ -11,9 +11,9 @@ const PORT = process.env.PORT || 4000
 app.use(bodyparser.json())
 app.use(bodyparser.urlencoded({ extended: true }))
 
-const UserRoute = require('./routes/userRoute.js')
-const BookRoute = require('./routes/bookRoute.js')
-const NotificationRoute = require('./routes/notificationRoute.js')
+const UserRoute = require('./routes/userRoute')
+const BookRoute = require('./routes/bookRoute')
+const NotificationRoute = require('./routes/notificationRoute')
 
 app.use('/user', UserRoute)
 app.use('/book', BookRoute)
