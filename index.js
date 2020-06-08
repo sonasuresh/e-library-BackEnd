@@ -3,7 +3,6 @@ const app = express()
 const bodyparser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
-const notificationController = require('./controllers/notificationController')
 
 app.use(cors())
 
@@ -20,12 +19,6 @@ app.use('/user', UserRoute)
 app.use('/book', BookRoute)
 app.use('/notification', NotificationRoute)
 
-var CronJob = require('cron').CronJob
-
-var job = new CronJob('*/30 * * * *', function () {
-  notificationController.sendNotification()
-}, null, true, 'America/Los_Angeles')
-job.start()
 
 // const URL = 'mongodb://127.0.0.1:27017/stackfinance'//local
 
